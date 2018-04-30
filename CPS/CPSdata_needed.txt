@@ -1,0 +1,53 @@
+CPSdata_needed.txt
+To run this code, you will need the following data extracts from CPS. We recommend using cps.IPUMS.org
+
+------------------------------------------------------------------------------------------
+CPSfull2017.dta
+-----------
+Sample: Annual 1980-2016
+Variables:
+
+H	YEAR	Survey year	--
+H	SERIAL	Household serial number	--
+H	MONTH	Month	--
+H	CPSID	CPSID, household record	--
+H	ASECFLAG	Flag for ASEC	--
+H	HFLAG	Flag for the 3/8 file 2014	--
+H	CPI99	CPI-U adjustment factor to 1999 dollars	--
+P	PERNUM	Person number in sample unit	--
+P	CPSIDP	CPSID, person record	--
+P	AGE	Age	details
+P	SEX	Sex	details
+P	RACE	Race	--
+P	MARST	Marital status	--
+P	POPSTAT	Adult civilian, armed forces, or child	--
+P	EMPSTAT	Employment status	details
+P	OCC1990	Occupation, 1990 basis	--
+P	CLASSWKR	Class of worker	--
+P	EDUC	Educational attainment recode	--
+P	EARNWT	Earnings weight	--
+P	WKSWORK1	Weeks worked last year	--
+P	UHRSWORKLY	Usual hours worked per week (last yr)	--
+P	INCWAGE	Wage and salary income	--
+P	DISABWRK	Work disability	--
+P	HEALTH	Health status	--
+
+CPSfull2018.dta
+-----------
+Sample: Monthly 1/1984-12/2017
+Variables:
+
+Change
+Type	Variable	Label	Case Selection
+H	YEAR	Survey year	--
+H	SERIAL	Household serial number	--
+H	MONTH	Month	--
+H	ASECFLAG	Flag for ASEC	--
+P	PERNUM	Person number in sample unit	--
+P	WTFINL	Final Basic Weight	--
+P	AGE	Age	details
+P	SEX	Sex	--
+P	EMPSTAT	Employment status	--
+P	OCC1990	Occupation, 1990 basis	--
+P	UHRSWORKORG	Usual hours worked per week, outgoing rotation groups	--
+P	WKSWORKORG	Weeks worked per year, outgoing rotation groups	--

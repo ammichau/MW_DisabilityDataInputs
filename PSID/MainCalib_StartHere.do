@@ -1,22 +1,16 @@
 *MainCalib_StartHere.do
-
-*-------------------@A. Michaud for DIoption w/ DW---------------------------------*
-	*Current: v.4-30-2018 @A. Michaud; v.GitHub: final specifications only
-	*O.G.: v.5-1-2017 @A. Michaud
-	*!!!Make sure you have an output directory "$root_dir/OUT"!!!
-
+*-------------------v.5-1-2017; @A. Michaud for DIoption w/ DW---------------------------------*
 clear all
 set more off
 
-*Set your root here
-global root_dir "SET YOUR ROOT DIRECTORY HERE"
-global PSID_dir "PSID"
+*Be sure there is a directory "disability" with subdirectories CPS and PSID
+global root_dir "C:\Users\ammichau\Google Drive\Disability\DisabilityOption\Data\Calibration"
 global CPS_dir "CPS"
 global InputDTAs_dir "PSID\InputDTAs"
 global ExtrasOut_dir "Extras"
 global OUT_dir "OUT_2"
 
-cd $root_dir
+cd "$root_dir"
 	
 ***************************************************************************************************************
 * As the name would suggest, this is the main shell file that executes all of the work for the calibration targets.
@@ -36,7 +30,7 @@ cd $root_dir
 *	COMPUTATION AND OUTPUT DO'S
 *		-HealthTrans.do
 *		-HeckitRegs.do
-*		-OccWageTS_Spline.do
+*		-OccWageTS.do
 * +Datasets used:
 *		-ONETpca.dta; Occupation tasks principal components from "Risky Occ Paper", see DW.
 *		-CPS_ExclRestr.dta and CPS_ExclRestrByEd.dta; created by "CPS_ExlRestr.do" in folder "CPS"
@@ -57,13 +51,13 @@ cd $root_dir
 *Set-up	
 	*These do-files clean and create needed variables. See files for details
 		do $PSID_dir\occhistory2000
-			cd $root_dir
+			cd "$root_dir"
 		do $PSID_dir\occhist
-			cd $root_dir
+			cd "$root_dir"
 		do $PSID_dir\work
-			cd $root_dir
+			cd "$root_dir"
 		do $PSID_dir\health
-			cd $root_dir
+			cd "$root_dir"
 			global InputDTAs_dir "PSID\InputDTAs"
 	*Merge completed .dta's from above .do files
 		use $InputDTAs_dir\occhist.dta, clear
@@ -74,8 +68,15 @@ cd $root_dir
 		save $InputDTAs_dir\calibdata1.dta, replace
 *--------------------------------------------------------------------------------------------------		
 * Choose the definition of "lifetime occupation" that you want to use.
+*---> In the paper we use specification #2
+*	  I've commented the loop out for now because it is for robustness only and takes a longtime
+*	  See line ~ 250 to close this loop
 
-	global OUT_dir "OUT"
+  *forvalues lo =1/4{
+    local lo = 2
+	global LongOccDef=`lo'
+	local o = $LongOccDef
+	global OUT_dir "OUT_`o'"
 	
 	use $InputDTAs_dir\calibdata1.dta, clear
 
@@ -151,11 +152,27 @@ cd $root_dir
 	
 	by x11101ll, sort: egen yrs = sum(d)
 	by x11101ll, sort: egen maxTnre = max(d2)
+	by x11101ll, sort: egen everlongjob = max(longjob)
+	replace everlongjob=0 if everlongjob==.
 	
-	*Define lifetime Occ: require 9 observations and at least 9 years on longest occ
+	*For robustness, we will consider some different measures of long job.
+		*This uses 3 options, tenure is important for early obs
+			gen lifeoccI1=(yrs>4 | maxTnre> 4 | longjob==1) 
+		*This is a more strict one on length (94% overlap w/ cat 1)
 			gen lifeoccI2=((yrs>9 | maxTnre> 9)) 		
-
-	gen LifeOcc2=Occ2 if (lifeoccI2==1)
+		**This relies on self-reports of "mostly the same type of work" over life. VERY RESTRICTIVE--- not asked in all years
+			gen lifeoccI3=(everlongjob) 
+			gen lifeoccI4=0
+						
+	local o = $LongOccDef	
+	gen LifeOcc2=Occ2 if (lifeoccI`o'==1)
+*This is a placebo: current or most recent occupation	
+	sort x11101ll wave
+	    by x11101ll: egen lastOccY = max(cond(Currocc~=., wave, .))
+		gen lastOcc = Currocc if wave==lastOccY
+		by x11101ll, sort: egen lastOccFill=max(lastOcc) 
+		replace LifeOcc2=Currocc if ($LongOccDef==4)
+		replace LifeOcc2=lastOccFill if (LifeOcc2==. & wave>lastOccY & $LongOccDef==4)
 
 	drop lastOcc*
 	
@@ -226,7 +243,7 @@ do $PSID_dir\HealthTrans.do
 *-------------------------------------------------------------------------------------------------
 * Coding Chunk 4: HECKIT
 *-------------------------------------------------------------------------------------------------	
-do $CPS_dir\CPS_ExclResr.do
+*do $CPS_dir\CPS_ExclResr.do
 do $PSID_dir\HeckitRegs.do
 *-------------------------------------------------------------------------------------------------	
 
@@ -234,9 +251,11 @@ do $PSID_dir\HeckitRegs.do
 *-------------------------------------------------------------------------------------------------
 * Coding Chunk 5: Task Price Time Series
 *-------------------------------------------------------------------------------------------------	
-do $PSID_dir\OccWageTS_Spline.do
+do $PSID_dir\OccWageTS.do
 *-------------------------------------------------------------------------------------------------	
 
+*---->Uncomment to close loop on lifetime Occ 1/4 robustness
+*}
 
 *************************************************************************************************	
 *-------------------------------------------------------------------------------------------------
